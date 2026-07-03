@@ -280,6 +280,10 @@
       border-left-color: #F5A623;
     }
 
+    .note-card--green {
+      border-left-color: #3DD68C;
+    }
+
     .note-label,
     .sub-block-label {
       margin: 0 0 10px;
@@ -398,6 +402,23 @@
       color: #C8D0E8;
       font: 400 13px/1.8 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       white-space: pre-line;
+    }
+
+    .final-review-frame {
+      position: relative;
+      margin-top: 18px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+    }
+
+    .final-review-image {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
     }
 
     .footer {
@@ -689,6 +710,20 @@ Day 3: Send the COO a short update, contact workflow owners privately, start a s
 I also plan to delay the policy document Finance asked for because I think writing it before understanding what exists is the wrong order.
 
 Can you challenge this? Tell me if I am solving the wrong problem, if my sequence is off, or if there is something important I am missing. Be direct. Do not just agree with me."</div>
+        </article>
+
+        <article class="note-card note-card--green">
+          <p class="note-label">FINAL REVIEW</p>
+          <h2>Why this is the future-facing solution</h2>
+          <p>I re-reviewed the full task, the handwritten notes, the AI-assisted draft, and the final structure. My conclusion did not change: the durable answer is not heavier governance, more forms, or an immediate policy document. The future-facing solution is lightweight operational visibility.</p>
+          <p>AI workflows are going to keep spreading across teams. The right operating model is one where teams can still move quickly, but ownership, cost, provider, status, and recent changes are visible by default. In practice, that means a simple dashboard or register that shows usage by workflow, API key, team, and owner, with sensible limits once the data is understood. That is what makes AI adoption scalable instead of chaotic.</p>
+          <p>This final review helped me land on the simplest version of the answer: do not slow the business down. Make the invisible visible, then use that visibility to make better decisions.</p>
+          <div class="final-review-frame">
+            <img class="final-review-image" src="final-review.png" alt="Final review notes showing the conclusion after re-reviewing the solution">
+            <button class="zone" type="button" aria-label="Read final review note" data-text="After review, the best solution would be creating a dashboard that shows the usage of each type of AI workflow / API keys, and be able to set limits per type / person." style="top: 22%; left: 3%; width: 91%; height: 62%;">
+              <span class="hint-dot" aria-hidden="true"></span>
+            </button>
+          </div>
         </article>
       </div>
     </section>
