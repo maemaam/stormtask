@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handwritten Working Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0F1117;
+      --panel: #171B26;
+      --panel-border: #272D42;
+      --text: #FFFFFF;
+      --muted: #9EA6B8;
+      --accent: #4F7FFF;
+      --page-max: 600px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(79, 127, 255, 0.13), transparent 34rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .reader {
+      width: 100%;
+      min-height: 100vh;
+      padding: 34px 18px 30px;
+    }
+
+    .masthead,
+    .footer {
+      width: min(100%, var(--page-max));
+      margin: 0 auto;
+    }
+
+    .masthead {
+      position: relative;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font: 700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 0;
+      color: #fff;
+      font-size: 22px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .subtext {
+      margin: 8px 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .divider {
+      width: 76px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 18px rgba(79, 127, 255, 0.6);
+    }
+
+    .reference-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 8px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: rgba(23, 27, 38, 0.84);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26);
+      backdrop-filter: blur(10px);
+      transition: border-color 150ms ease, background-color 150ms ease;
+    }
+
+    .reference-link:hover,
+    .reference-link:focus-visible {
+      border-color: rgba(79, 127, 255, 0.72);
+      background: rgba(23, 27, 38, 0.96);
+      outline: none;
+    }
+
+    .reference-link--header {
+      margin-top: 18px;
+    }
+
+    .reference-link--floating {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 12;
+    }
+
+    .pages {
+      display: grid;
+      gap: 26px;
+      justify-items: center;
+      margin: 30px auto 32px;
+    }
+
+    .page {
+      position: relative;
+      width: min(100%, var(--page-max));
+      border-radius: 2px;
+      overflow: hidden;
+      background: #f6f0dd;
+      box-shadow:
+        0 22px 56px rgba(0, 0, 0, 0.48),
+        0 2px 4px rgba(0, 0, 0, 0.28);
+      isolation: isolate;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 16%, transparent 84%, rgba(0, 0, 0, 0.06)),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 4px);
+      mix-blend-mode: multiply;
+      opacity: 0.7;
+    }
+
+    .page img {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .zone {
+      position: absolute;
+      z-index: 2;
+      border: 0;
+      padding: 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0);
+      cursor: pointer;
+      transition: background-color 150ms ease;
+      touch-action: manipulation;
+    }
+
+    .zone:hover,
+    .zone:focus-visible,
+    .zone.is-active {
+      background: rgba(255, 255, 255, 0.04);
+      outline: none;
+    }
+
+    .zone:focus-visible {
+      box-shadow: 0 0 0 2px rgba(79, 127, 255, 0.65);
+    }
+
+    .hint-dot {
+      display: none;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(79, 127, 255, 0.45);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: pulse 1.8s ease-out infinite;
+    }
+
+    .tooltip {
+      position: fixed;
+      z-index: 20;
+      max-width: min(320px, calc(100vw - 28px));
+      padding: 14px 18px 14px 20px;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.7;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(5px);
+      transition: opacity 150ms ease, transform 150ms ease;
+      white-space: pre-line;
+    }
+
+    .tooltip::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 3px;
+      border-radius: 0 999px 999px 0;
+      background: var(--accent);
+    }
+
+    .tooltip.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .additional-notes {
+      width: min(100%, 680px);
+      margin: 42px auto 36px;
+    }
+
+    .section-divider {
+      display: grid;
+      justify-items: center;
+      gap: 9px;
+      margin: 0 0 24px;
+    }
+
+    .section-divider::before {
+      content: "";
+      width: 100%;
+      height: 1px;
+      background: rgba(79, 127, 255, 0.88);
+    }
+
+    .section-divider span {
+      color: var(--muted);
+      font: 600 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .notes-stack {
+      display: grid;
+      gap: 20px;
+    }
+
+    .note-card {
+      padding: 28px;
+      border: 1px solid var(--panel-border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+
+    .note-card--red {
+      border-left-color: #E05252;
+    }
+
+    .note-card--purple {
+      border-left-color: #7B5EA7;
+    }
+
+    .note-card--amber {
+      border-left-color: #F5A623;
+    }
+
+    .note-label,
+    .sub-block-label {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font: 700 10px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .note-card h2 {
+      margin: 0 0 14px;
+      color: #E8EBF4;
+      font-size: 17px;
+      line-height: 1.35;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .note-card p,
+    .note-item,
+    .email-block,
+    .prompt-block,
+    .ai-sub-block {
+      color: #8B92A8;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .note-card p {
+      margin: 0;
+    }
+
+    .note-card p + p {
+      margin-top: 14px;
+    }
+
+    .note-list {
+      display: grid;
+      gap: 18px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .note-item {
+      position: relative;
+      padding-left: 24px;
+    }
+
+    .note-item::before {
+      content: "✕";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #E05252;
+      font-weight: 700;
+    }
+
+    .note-item strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #E8EBF4;
+      font-weight: 700;
+    }
+
+    .note-aside,
+    .closing-line {
+      color: #8B92A8;
+      font-style: italic;
+    }
+
+    .email-block {
+      margin-top: 16px;
+      padding: 20px;
+      border-radius: 6px;
+      background: #1E2235;
+      white-space: pre-line;
+    }
+
+    .ai-blocks {
+      margin-top: 4px;
+      border-top: 1px solid rgba(39, 45, 66, 0.9);
+      border-bottom: 1px solid rgba(39, 45, 66, 0.9);
+    }
+
+    .ai-sub-block {
+      padding: 18px 0;
+    }
+
+    .ai-sub-block + .ai-sub-block {
+      border-top: 1px solid rgba(39, 45, 66, 0.9);
+    }
+
+    .sub-block-label {
+      margin-bottom: 8px;
+    }
+
+    .sub-block-label--green {
+      color: #3DD68C;
+    }
+
+    .sub-block-label--blue {
+      color: var(--accent);
+    }
+
+    .closing-line {
+      margin-top: 18px;
+    }
+
+    .prompt-block {
+      margin-top: 16px;
+      padding: 20px;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: #C8D0E8;
+      font: 400 13px/1.8 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      white-space: pre-line;
+    }
+
+    .footer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      padding-top: 2px;
+    }
+
+    .footer-name {
+      margin: 0 0 4px;
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.3;
+      font-weight: 600;
+    }
+
+    .footer-email {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .footer-date {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font: 600 12px/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(79, 127, 255, 0.5);
+      }
+      70% {
+        box-shadow: 0 0 0 12px rgba(79, 127, 255, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(79, 127, 255, 0);
+      }
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      .reader {
+        padding: 28px 14px 26px;
+      }
+
+      .pages {
+        gap: 20px;
+        margin-top: 26px;
+      }
+
+      .hint-dot {
+        display: block;
+      }
+    }
+
+    @media (max-width: 599px) {
+      .additional-notes {
+        margin-top: 34px;
+        margin-bottom: 30px;
+      }
+
+      .note-card {
+        padding: 20px;
+      }
+
+      .note-card h2 {
+        font-size: 16px;
+      }
+
+      .note-card p,
+      .note-item,
+      .email-block,
+      .prompt-block,
+      .ai-sub-block {
+        font-size: 13px;
+      }
+
+      .note-label,
+      .sub-block-label {
+        font-size: 9px;
+      }
+
+      .email-block,
+      .prompt-block {
+        padding: 18px;
+      }
+    }
+
+    @media (min-width: 720px) {
+      .reader {
+        padding-top: 44px;
+      }
+
+      .pages {
+        gap: 34px;
+      }
+
+      .reference-link--header {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin-top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="reader">
+    <header class="masthead">
+      <p class="eyebrow">STORM IDEAS — AI OPERATIONS TASK</p>
+      <h1>Handwritten Working Notes</h1>
+      <p class="subtext">Hover any section to read — tap on mobile</p>
+      <div class="divider" aria-hidden="true"></div>
+      <a class="reference-link reference-link--header" href="book-reference.pdf" target="_blank" rel="noopener">Original PDF</a>
+    </header>
+
+    <section class="pages" aria-label="Scanned notebook pages">
+      <article class="page" aria-label="Notebook page 1">
+        <img src="page1.jpg" alt="Scanned handwritten notebook page 1">
+        <button class="zone" type="button" aria-label="Read page 1 top section" data-text="What is the Problem Statement?
+The surge in spend because everyone used AI across their workflows (Product, Operations, Content & Internal Support)" style="top: 6%; left: 8%; width: 87%; height: 22%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+        <button class="zone" type="button" aria-label="Read page 1 middle section" data-text="What I would do &amp; in what order?
+
+Day 1 Goal: Assess before touching anything
+• Get read access to cloud billing, OpenAI dashboard, Google AI Studio &amp; workflow run logs → 0 changes
+• Ask Finance for the last 3 invoices &amp; what triggered the alert → exact numbers
+• Send an announcement message to all Product leads: list all AI workflow changes you made in the last 30 days (no meeting needed)
+• Ask IT for a list of active API keys &amp; their assigned teams without any revocations yet
+• Build a rough cost map" style="top: 29%; left: 8%; width: 87%; height: 48%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+        <button class="zone" type="button" aria-label="Read page 1 bottom section" data-text="Cost map table:
+Columns: Workflow Name | Owner | Last Changed | Status
+Note: Doesn't need to be 100% completed." style="top: 77%; left: 8%; width: 87%; height: 20%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+      </article>
+
+      <article class="page" aria-label="Notebook page 2">
+        <img src="page2.jpg" alt="Scanned handwritten notebook page 2">
+        <button class="zone" type="button" aria-label="Read page 2 top section" data-text="Day 2 Goal: Find what actually workflows drove the surge
+• Cross reference Finance invoices line items against team API keys owners list
+• Flag Top 3–5 cost contributors → owner's name
+• Identify any workflows with no owners
+  → Highest risk &amp; need a decision, not an audit" style="top: 10%; left: 5%; width: 89%; height: 31%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+        <button class="zone" type="button" aria-label="Read page 2 middle section" data-text="Day 3 Goal: Now is the time for action but without Panic
+• COO update with the findings
+• Contact owners of the top cost items → Privately asking them about their workflows
+• Start a shared registering document, owned by my AI ops team → update weekly so it won't happen again
+• Identify one workflow that is misconfigured or over-calling &amp; propose a fix to the owner" style="top: 41%; left: 5%; width: 89%; height: 40%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+        <button class="zone" type="button" aria-label="Read page 2 bottom section" data-text="Second table sketch:
+Columns: Owner | Last Changed | Provider | Status | Cost
+(Draft version — fields being worked out)" style="top: 81%; left: 5%; width: 89%; height: 15%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+      </article>
+
+      <article class="page" aria-label="Notebook page 3">
+        <img src="page3.jpg" alt="Scanned handwritten notebook page 3">
+        <button class="zone" type="button" aria-label="Read page 3 top section" data-text="Preventing this from happening again:
+• Registry stays live → Not a one time audit. Updated weekly → Low friction, High value
+• API keys are named from day one → Every new key puts a name tag &amp; makes future bills attributable
+• 15 min. monthly review with Finance → did anything jump?
+• AI workflow changes go in a shared log
+• Once we have 4–6 weeks of data in the registry we write a lightweight policy" style="top: 10%; left: 11%; width: 86%; height: 42%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+        <button class="zone" type="button" aria-label="Read page 3 bottom section" data-text="Assumptions:
+• Read access is available without a formal approval process → Lengthy approval chain = Ops Problem as we can't see immediately what we are responsible for
+• Product leads will respond to Slack request quickly → if not, that's a deeper ownership issue not just tools
+• Retention of logs from IT from the surge period → if not that's a gap to fix
+• Cost &amp; visibility rather than a security incident → In the research if it's a security incident, that becomes a different process" style="top: 56%; left: 11%; width: 86%; height: 42%;">
+          <span class="hint-dot" aria-hidden="true"></span>
+        </button>
+      </article>
+    </section>
+
+    <section class="additional-notes" aria-label="Additional notes">
+      <div class="section-divider" aria-hidden="true">
+        <span>— additional notes —</span>
+      </div>
+
+      <div class="notes-stack">
+        <article class="note-card">
+          <p class="note-label">THE REAL DIAGNOSIS</p>
+          <h2>What the notes don't say</h2>
+          <p>The notes show what I would do. They don't show the diagnosis that comes before the actions.</p>
+          <p>This is not a spend problem. It is a visibility problem.</p>
+          <p>The surge in spend is a symptom. The root cause is that AI tooling scaled faster than operational awareness. Nobody knows what is running, who owns it, what changed, or what it costs. The spend surge was inevitable given this setup and it will happen again without a fix. That reframe changes what you do first. You don't start by cutting spend. You start by getting visibility.</p>
+        </article>
+
+        <article class="note-card note-card--red">
+          <p class="note-label">DELIBERATE RESTRAINT</p>
+          <h2>Things I decided not to do</h2>
+          <ul class="note-list">
+            <li class="note-item">
+              <strong>Write a policy document</strong>
+              Finance asked for this. It is the wrong first move. A policy written before you understand what you are governing will not fit reality. I would tell Finance: within two weeks, not today.
+            </li>
+            <li class="note-item">
+              <strong>Revoke API keys</strong>
+              Disruptive without clear evidence of misuse. Could break workflows the product depends on.
+            </li>
+            <li class="note-item">
+              <strong>Set spending caps immediately</strong>
+              Without knowing what spend is legitimate, caps could cut important work. Understand first, then constrain.
+            </li>
+            <li class="note-item">
+              <strong>Build tooling or dashboards</strong>
+              Not the moment. Visibility needs come before infrastructure.
+            </li>
+            <li class="note-item">
+              <strong>Create a steering committee</strong>
+              Heavy governance is exactly what the COO said to avoid. It adds delay, not clarity.
+            </li>
+            <li class="note-item">
+              <strong>Ask people to submit usage forms</strong>
+              Creates friction and resentment. People work around processes they find annoying.
+            </li>
+          </ul>
+        </article>
+
+        <article class="note-card">
+          <p class="note-label">FIRST UPDATE WHILE STILL UNRESOLVED</p>
+          <h2>The message I would send on Day 3</h2>
+          <p class="note-aside">I drafted the structure myself then used AI to help tighten the wording. The first version was too long. I cut anything that sounded like I was managing the situation instead of reporting it honestly.</p>
+          <div class="email-block">To: [COO Name]
+Subject: AI Spend Surge — Where We Are (Day 3 update)
+
+Hi [Name],
+
+Here is where things stand. I have mapped the main cost signals across Finance invoices, cloud billing, and provider dashboards. I can now see approximately [X] active AI workflows across the business, though ownership is still incomplete on a few.
+
+The top cost contributors appear to be [content automation / reporting scripts / support prompts]. I am in direct conversation with the relevant owners now. My current read is that the surge was driven by a volume increase in an existing workflow or a new workflow that was not logged centrally. I will have that confirmed by end of week.
+
+What is not a crisis: most of what is running is legitimate work. The issue is that it scaled without anyone tracking it centrally. That is the thing I am fixing.
+
+What I am doing next: fixing the most obvious inefficiency, assigning ownership to every live workflow, and building a simple register so this does not happen without warning again.
+
+On the policy question from Finance, I want to hold that for two weeks. A policy written before we understand what we are governing will not fit what we actually have.
+
+Will send a full update by [date].
+
+Mohammed</div>
+        </article>
+
+        <article class="note-card note-card--purple">
+          <p class="note-label">AI USE — HONEST ACCOUNT</p>
+          <h2>Where AI helped and where it did not</h2>
+          <div class="ai-blocks">
+            <div class="ai-sub-block">
+              <p class="sub-block-label sub-block-label--green">BEFORE AI</p>
+              <p>I worked the full problem out on paper before opening any tool. The problem statement, the 3-day sequence, the cost map structure, the assumptions, and the prevention steps were all written by hand in my notebook. The notebook pages above are the evidence. The thinking came first.</p>
+            </div>
+            <div class="ai-sub-block">
+              <p class="sub-block-label sub-block-label--blue">WHERE AI CAME IN</p>
+              <p>I used Claude to turn my handwritten structure into a polished document and to build the HTML submission. I directed the content, reviewed every section, and pushed back on anything that did not match what I meant.</p>
+              <p>I used AI to draft the COO update. The first version was too long and too careful. I rewrote it to be shorter and more direct.</p>
+              <p>I used AI to pressure-test the sequence. I asked it to challenge whether I was solving the right problem. It held up.</p>
+              <p>I rejected the first framing AI gave me. It led with writing a policy document, which is exactly what I argue against in this submission. I pushed back and started again.</p>
+            </div>
+          </div>
+          <p class="closing-line">The judgment calls are mine. AI helped me build faster and check my thinking. It did not do the thinking.</p>
+        </article>
+
+        <article class="note-card note-card--amber">
+          <p class="note-label">PROMPT EXAMPLE</p>
+          <h2>How I talked to AI during this task</h2>
+          <p class="note-aside">This is close to the actual prompt I used when I asked Claude to challenge my approach. I write prompts like I am talking to a smart colleague, not like I am programming a machine.</p>
+          <div class="prompt-block">"I have been given a task by a company called Storm Ideas. They had an unexpected AI spend surge and the COO asked me to figure out what is going on without turning it into a heavy governance exercise.
+
+I have already worked out my approach on paper. Here is my plan:
+
+Day 1: Get read access to billing and dashboards, ask Finance for the last 3 invoices, send an async message to Product leads asking them to list every AI workflow change in the last 30 days, ask IT for active API keys, start a rough cost map.
+
+Day 2: Cross-reference invoice line items with API key owners, find the top 3 to 5 cost contributors, identify any workflows with no owner.
+
+Day 3: Send the COO a short update, contact workflow owners privately, start a shared register, fix one misconfigured workflow.
+
+I also plan to delay the policy document Finance asked for because I think writing it before understanding what exists is the wrong order.
+
+Can you challenge this? Tell me if I am solving the wrong problem, if my sequence is off, or if there is something important I am missing. Be direct. Do not just agree with me."</div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>
+        <p class="footer-name">Mohammed Alaa El-Din</p>
+        <p class="footer-email">Maemaam@gmail.com</p>
+      </div>
+      <div class="footer-date">June 2026</div>
+    </footer>
+  </main>
+
+  <a class="reference-link reference-link--floating" href="book-reference.pdf" target="_blank" rel="noopener">Original PDF</a>
+
+  <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const tooltip = document.getElementById("tooltip");
+      const zones = Array.from(document.querySelectorAll(".zone"));
+      const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      let activeZone = null;
+
+      function setTooltipPosition(zone) {
+        const rect = zone.getBoundingClientRect();
+        const gap = 12;
+        const margin = 14;
+
+        tooltip.style.left = "0px";
+        tooltip.style.top = "0px";
+
+        const tipRect = tooltip.getBoundingClientRect();
+        let left = rect.right + gap;
+        let top = rect.top + Math.min(20, rect.height * 0.18);
+
+        if (left + tipRect.width + margin > window.innerWidth) {
+          left = rect.left - tipRect.width - gap;
+        }
+
+        if (left < margin) {
+          left = Math.min(window.innerWidth - tipRect.width - margin, margin);
+        }
+
+        if (top + tipRect.height + margin > window.innerHeight) {
+          top = rect.bottom - tipRect.height - Math.min(20, rect.height * 0.18);
+        }
+
+        if (top < margin) {
+          top = margin;
+        }
+
+        tooltip.style.left = `${Math.round(left)}px`;
+        tooltip.style.top = `${Math.round(top)}px`;
+      }
+
+      function showTooltip(zone) {
+        activeZone = zone;
+        zones.forEach((item) => item.classList.toggle("is-active", item === zone));
+        tooltip.textContent = zone.dataset.text;
+        tooltip.classList.add("is-visible");
+        setTooltipPosition(zone);
+      }
+
+      function hideTooltip() {
+        activeZone = null;
+        zones.forEach((item) => item.classList.remove("is-active"));
+        tooltip.classList.remove("is-visible");
+      }
+
+      zones.forEach((zone) => {
+        if (canHover) {
+          zone.addEventListener("mouseenter", () => showTooltip(zone));
+          zone.addEventListener("mouseleave", hideTooltip);
+          zone.addEventListener("focus", () => showTooltip(zone));
+          zone.addEventListener("blur", hideTooltip);
+        }
+
+        zone.addEventListener("click", (event) => {
+          if (canHover) {
+            return;
+          }
+
+          event.stopPropagation();
+          if (activeZone === zone) {
+            hideTooltip();
+          } else {
+            showTooltip(zone);
+          }
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!event.target.closest(".zone")) {
+          hideTooltip();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          hideTooltip();
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        if (activeZone) {
+          setTooltipPosition(activeZone);
+        }
+      });
+
+      window.addEventListener("scroll", () => {
+        if (activeZone) {
+          setTooltipPosition(activeZone);
+        }
+      }, { passive: true });
+    })();
+  </script>
+</body>
+</html>
